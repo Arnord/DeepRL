@@ -119,6 +119,16 @@ def train_BCQ(state_dim, action_dim, max_action, device, args):
 		'actor_loss_seq': []
 	}
 
+	pol_policy_seq = {
+		'vae_policy_seq': [],
+		'policy_seq': [],
+		'origin_policy_seq': []
+	}
+
+	pol_state_seq = {
+		'state_seq': []
+	}
+
 	while training_iters < args.max_timesteps: 
 		pol_trains = policy.train(replay_buffer_train, iterations=int(args.eval_freq), batch_size=args.batch_size)
 		# 验证集
@@ -132,12 +142,20 @@ def train_BCQ(state_dim, action_dim, max_action, device, args):
 		pol_evals_seq['critic_loss_seq'].append(pol_evals['critic_loss_seq'].mean())
 		pol_trains_seq['actor_loss_seq'].append(pol_trains['actor_loss_seq'].mean())
 		pol_evals_seq['actor_loss_seq'].append(pol_evals['actor_loss_seq'].mean())
-		# # plt 绘图
-		# utils.loss_visualization(pol_trains, 'train', fig_path, training_iters)
-		# print(f"train loss plt over----------{training_iters}")
-		# utils.loss_visualization(pol_evals, 'eval', fig_path, training_iters)
-		# print(f"eval loss plt over----------{training_iters}")
 
+		pol_policy_seq['vae_policy_seq'] = pol_trains['vae_policy_seq']
+		pol_policy_seq['policy_seq'] = pol_trains['policy_seq']
+		pol_policy_seq['origin_policy_seq'] = pol_trains['origin_policy_seq']
+		pol_state_seq['state_seq'] = pol_trains['state_seq']
+
+		# 单轮次plt 绘图
+		utils.policy_visualization(pol_policy_seq, fig_path, training_iters)
+		print(f"policy plt over----------{training_iters}")
+		# utils.state_visualization(pol_state_seq, fig_path, training_iters)
+		# print(f"vae plt over----------{training_iters}")
+
+		# utils.origin_visualization(pol_evals, fig_path, training_iters)
+		# print(f"origin plt over----------{training_iters}")
 		# np.save(f"./results/BCQ_{setting}", evaluations)
 
 		training_iters += args.eval_freq
@@ -175,7 +193,7 @@ if __name__ == "__main__":
 	
 	parser = argparse.ArgumentParser()
 	# parser.add_argument("--env", default="HalfCheetah-v1")               # OpenAI gym environment name
-	parser.add_argument("--env", default="Hopper-v1")
+	parser.add_argument("--env", default="thickener")
 	parser.add_argument("--seed", default=0, type=int)              # Sets Gym, PyTorch and Numpy seeds
 	parser.add_argument("--buffer_name", default="Robust")          # Prepends name to filename
 	parser.add_argument("--eval_freq", default=1e3, type=float)     # How often (time steps) we evaluate
@@ -190,6 +208,9 @@ if __name__ == "__main__":
 	parser.add_argument("--phi", default=0.05)                      # Max perturbation hyper-parameter for BCQ
 	parser.add_argument("--train_behavioral", action="store_true")  # If true, train behavioral (DDPG)
 	parser.add_argument("--generate_buffer", action="store_true")   # If true, generate buffer
+
+	parser.add_argument("--lr", default=1e-3, type=float)           # lr for BCQ Network optimizer
+	parser.add_argument("--rand_seed", default=0, type=int)
 	args = parser.parse_args()
 
 	print("---------------------------------------")	
@@ -214,7 +235,9 @@ if __name__ == "__main__":
 	if not os.path.exists("./buffers"):
 		os.makedirs("./buffers")
 
-	fig_path = f"./results/fig/{datetime.now():%Y-%m-%d_%H-%M-%S}"
+	utils.set_random_seed(args.rand_seed)
+
+	fig_path = f"./results/{args.env}/fig/{datetime.now():%Y-%m-%d_%H-%M-%S}_{args.lr}_{args.rand_seed}"
 	if not os.path.exists(fig_path)	:
 		os.makedirs(fig_path)
 
@@ -229,6 +252,7 @@ if __name__ == "__main__":
 	# state_dim = env.observation_space.shape[0]
 	# action_dim = env.action_space.shape[0]
 	# max_action = float(env.action_space.high[0])
+
 	state_dim = 8
 	action_dim = 1
 	max_action = 2

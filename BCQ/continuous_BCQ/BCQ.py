@@ -99,16 +99,16 @@ class VAE(nn.Module):
 
 
 class BCQ(object):
-	def __init__(self, state_dim, action_dim, max_action, device, discount=0.99, tau=0.005, lmbda=0.75, phi=0.05):
+	def __init__(self, state_dim, action_dim, max_action, device, discount=0.99, tau=0.005, lmbda=0.75, phi=0.05, lr=1e-3):
 		latent_dim = action_dim * 2
 
 		self.actor = Actor(state_dim, action_dim, max_action, phi).to(device)
 		self.actor_target = copy.deepcopy(self.actor)
-		self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=1e-3)
+		self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=lr)
 
 		self.critic = Critic(state_dim, action_dim).to(device)
 		self.critic_target = copy.deepcopy(self.critic)
-		self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=1e-3)
+		self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=lr)
 
 		self.vae = VAE(state_dim, action_dim, latent_dim, max_action, device).to(device)
 		self.vae_optimizer = torch.optim.Adam(self.vae.parameters()) 
@@ -135,10 +135,16 @@ class BCQ(object):
 		vae_loss_seq = []
 		critic_loss_seq = []
 		actor_loss_seq = []
+		policy_seq = []
+		vae_policy_seq = []
+		origin_policy_seq = []
+		state_seq = []
 
 		for it in range(iterations):
 			# Sample replay buffer / batch
 			state, action, next_state, reward, not_done = replay_buffer.sample(batch_size)
+			state_seq.append(state[0])
+			origin_policy_seq.append(action[0][0])
 
 			# Variational Auto-Encoder Training
 			recon, mean, std = self.vae(state, action)
@@ -179,6 +185,8 @@ class BCQ(object):
 			# Pertubation Model / Action Training
 			sampled_actions = self.vae.decode(state)
 			perturbed_actions = self.actor(state, sampled_actions)
+			vae_policy_seq.append(sampled_actions[0][0])
+			policy_seq.append(perturbed_actions[0][0])
 
 			# Update through DPG
 			actor_loss = -self.critic.q1(state, perturbed_actions).mean()
@@ -199,11 +207,19 @@ class BCQ(object):
 		vae_loss_seq = torch.stack(vae_loss_seq, dim=0).cpu().detach().numpy()
 		critic_loss_seq = torch.stack(critic_loss_seq, dim=0).cpu().detach().numpy()
 		actor_loss_seq = torch.stack(actor_loss_seq, dim=0).cpu().detach().numpy()
+		policy_seq = torch.stack(policy_seq, dim=0).cpu().detach.numpy()
+		vae_policy_seq = torch.stack(vae_policy_seq, dim=0).cpu().detach().numpy()
+		origin_policy_seq = torch.stack(origin_policy_seq, dim=0).cpu().detach().numpy()
+		state_seq = torch.stack(state_seq, dim=0).cpu().detach().numpy()
 
 		outputs = {
 			'vae_loss_seq': vae_loss_seq,
 			'critic_loss_seq': critic_loss_seq,
-			'actor_loss_seq': actor_loss_seq
+			'actor_loss_seq': actor_loss_seq,
+			'policy_seq': policy_seq,
+			'vae_policy_seq': vae_policy_seq,
+			'origin_policy_seq': origin_policy_seq,
+			'state_seq': state_seq
 		}
 
 		return outputs

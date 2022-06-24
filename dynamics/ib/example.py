@@ -29,8 +29,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 
-n_trajectories = 6
-T = 10000
+n_trajectories = 1
+T = 100000
 
 data = np.zeros((n_trajectories, T))
 data_cost = np.zeros((n_trajectories, T))
@@ -58,7 +58,7 @@ for k in range(n_trajectories):
     df_obs = pd.DataFrame(obs, columns=env.observable_keys)
     df_action = pd.DataFrame(action, columns=['delta_v', 'delta_g', 'delta_h'])
     df_state = pd.concat([df_action, df_obs], axis=1)
-    df_state.to_csv("ibState%s.csv" % k, index=False)
+    df_state.to_csv("ibState%s_BCQ.csv" % k, index=False)
 plt.plot(data.T)
 plt.xlabel('T')
 plt.ylabel('Reward')

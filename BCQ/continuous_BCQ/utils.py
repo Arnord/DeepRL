@@ -72,6 +72,40 @@ def loss_visualization(outputs, text, fig_path, training_iters):
 
 	# best_epoch = y_dataset_eval_rrse.index(min(y_dataset_eval_rrse))
 
+	# vae_loss
+	plt.figure()
+	plt.plot(x_data_step, y_vae_loss, color='red', label="vae_loss")
+	# plt.axvline(best_epoch, color='r', linestyle='--', label='best epoch')
+	plt.xlabel('Step')
+	plt.ylabel('loss')
+	plt.title(f'{plt_label}_vae_loss_{training_iters}')
+	plt.legend()
+	plt.savefig(os.path.join(fig_path, f'{plt_label}_vae_loss_{training_iters}.png'))
+	plt.close()  # 关闭图像，避免出现warning
+
+	# critic_loss
+	plt.figure()
+	plt.plot(x_data_step, y_critic_loss, color='blue', label="critic_loss")
+	# plt.axvline(best_epoch, color='r', linestyle='--', label='best epoch')
+	plt.xlabel('Step')
+	plt.ylabel('loss')
+	plt.title(f'{plt_label}_critic_loss_{training_iters}')
+	plt.legend()
+	plt.savefig(os.path.join(fig_path, f'{plt_label}_critic_loss_{training_iters}.png'))
+	plt.close()  # 关闭图像，避免出现warning
+
+	# actor_loss
+	plt.figure()
+	plt.plot(x_data_step, y_actor_loss, color='black', label="actor_loss")
+	# plt.axvline(best_epoch, color='r', linestyle='--', label='best epoch')
+	plt.xlabel('Step')
+	plt.ylabel('loss')
+	plt.title(f'{plt_label}_actor_loss_{training_iters}')
+	plt.legend()
+	plt.savefig(os.path.join(fig_path, f'{plt_label}_actor_loss_{training_iters}.png'))
+	plt.close()  # 关闭图像，避免出现warning
+
+	# all
 	plt.figure()
 	plt.plot(x_data_step, y_vae_loss, color='red', label="vae_loss")
 	plt.plot(x_data_step, y_critic_loss, color='blue', label="critic_loss")
@@ -83,3 +117,60 @@ def loss_visualization(outputs, text, fig_path, training_iters):
 	plt.legend()
 	plt.savefig(os.path.join(fig_path, f'{plt_label}_loss_{training_iters}.png'))
 	plt.close()  # 关闭图像，避免出现warning
+
+
+def reward_visualization(reward_seq, fig_path, training_iters):
+	from matplotlib import pyplot as plt
+	import os
+
+	fig_path = fig_path
+	plt_label = 'reward'
+	reward_seq = reward_seq
+	x_data_step = [x for x in range(len(reward_seq))]
+
+	# best_epoch = y_dataset_eval_rrse.index(min(y_dataset_eval_rrse))
+
+	plt.figure()
+	plt.plot(x_data_step, reward_seq, color='red', label="vae_loss")
+	# plt.axvline(best_epoch, color='r', linestyle='--', label='best epoch')
+	plt.xlabel('Eval_Step')
+	plt.ylabel('reward')
+	plt.title(f'{plt_label}_{training_iters}')
+	plt.legend()
+	plt.savefig(os.path.join(fig_path, f'{plt_label}_{training_iters}.png'))
+	plt.close()  # 关闭图像，避免出现warning
+
+
+def policy_visualization(pol_policy, fig_path, training_iters):
+	from matplotlib import pyplot as plt
+	import os
+
+	fig_path = fig_path
+	plt_label = 'policy'
+	policy_seq = pol_policy['policy_seq']
+	vae_policy_seq = pol_policy['vae_policy_seq']
+	origin_seq = pol_policy['origin_seq']
+	x_data_step = [x for x in range(len(policy_seq))]
+
+	# best_epoch = y_dataset_eval_rrse.index(min(y_dataset_eval_rrse))
+
+	plt.figure()
+	plt.plot(x_data_step, policy_seq, color='red', label="vae_policy")
+	plt.plot(x_data_step, policy_seq, color='black', label="policy")
+	plt.plot(x_data_step, policy_seq, color='blue', label="origin_policy")
+	# plt.axvline(best_epoch, color='r', linestyle='--', label='best epoch')
+	plt.xlabel('train_Step')
+	plt.ylabel('policy')
+	plt.title(f'{plt_label}_{training_iters}')
+	plt.legend()
+	plt.savefig(os.path.join(fig_path, f'{plt_label}_{training_iters}.png'))
+	plt.close()  # 关闭图像，避免出现warning
+
+
+def set_random_seed(seed):
+	rand_seed = np.random.randint(0, 100000) if seed is None else seed
+	# logging('random seed = {}'.format(rand_seed))
+	print('random seed = {}'.format(rand_seed))
+	np.random.seed(rand_seed)
+	torch.manual_seed(rand_seed)
+	torch.cuda.manual_seed(rand_seed)
