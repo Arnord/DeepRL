@@ -5,7 +5,7 @@
       <sourceFolder url="file://$MODULE_DIR$/BCQ" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/BCQ/continuous_BCQ" isTestSource="false" />
     </content>
-    <orderEntry type="jdk" jdkName="Remote Python 3.8.10 (sftp://root@222.199.197.221:12322/bin/python3.8)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Remote Python 3.8.5 (sftp://root@dgx.server.ustb-ai3d.cn:12322/usr/bin/python)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="TestRunnerService">

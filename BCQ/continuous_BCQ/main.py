@@ -119,43 +119,56 @@ def train_BCQ(state_dim, action_dim, max_action, device, args):
 		'actor_loss_seq': []
 	}
 
-	pol_policy_seq = {
+	pol_trains_policy_seq = {
 		'vae_policy_seq': [],
 		'policy_seq': [],
-		'origin_policy_seq': []
+		'origin_policy_seq': [],
+		'state_seq':[]
 	}
 
-	pol_state_seq = {
+	pol_evals_policy_seq = {
+		'vae_policy_seq': [],
+		'policy_seq': [],
+		'origin_policy_seq': [],
 		'state_seq': []
 	}
 
-	while training_iters < args.max_timesteps: 
+
+	while training_iters <= args.max_timesteps:
 		pol_trains = policy.train(replay_buffer_train, iterations=int(args.eval_freq), batch_size=args.batch_size)
-		# 验证集
-		pol_evals = policy.train(replay_buffer_eval, iterations=int(args.eval_freq / 10), batch_size=args.batch_size)
 
 		# evaluations.append(eval_policy(policy, args.env, args.seed))
 
+		# pol_train_plt
 		pol_trains_seq['vae_loss_seq'].append(pol_trains['vae_loss_seq'].mean())
-		pol_evals_seq['vae_loss_seq'].append(pol_evals['vae_loss_seq'].mean())
 		pol_trains_seq['critic_loss_seq'].append(pol_trains['critic_loss_seq'].mean())
-		pol_evals_seq['critic_loss_seq'].append(pol_evals['critic_loss_seq'].mean())
 		pol_trains_seq['actor_loss_seq'].append(pol_trains['actor_loss_seq'].mean())
-		pol_evals_seq['actor_loss_seq'].append(pol_evals['actor_loss_seq'].mean())
 
-		pol_policy_seq['vae_policy_seq'] = pol_trains['vae_policy_seq']
-		pol_policy_seq['policy_seq'] = pol_trains['policy_seq']
-		pol_policy_seq['origin_policy_seq'] = pol_trains['origin_policy_seq']
-		pol_state_seq['state_seq'] = pol_trains['state_seq']
+		pol_trains_policy_seq['vae_policy_seq'] = pol_trains['vae_policy_seq']
+		pol_trains_policy_seq['policy_seq'] = pol_trains['policy_seq']
+		pol_trains_policy_seq['origin_policy_seq'] = pol_trains['origin_policy_seq']
+		pol_trains_policy_seq['state_seq'] = pol_trains['state_seq']
 
 		# 单轮次plt 绘图
-		utils.policy_visualization(pol_policy_seq, fig_path, training_iters)
-		print(f"policy plt over----------{training_iters}")
-		# utils.state_visualization(pol_state_seq, fig_path, training_iters)
-		# print(f"vae plt over----------{training_iters}")
+		utils.policy_visualization(pol_trains_policy_seq, 'train_policy', fig_path, training_iters)
+		print(f"train policy plt over----------{training_iters}")
 
-		# utils.origin_visualization(pol_evals, fig_path, training_iters)
-		# print(f"origin plt over----------{training_iters}")
+		# 验证集
+		if training_iters % args.eval_step == 0:
+			pol_evals = policy.eval(replay_buffer_eval, iterations=int(args.eval_freq), batch_size=args.batch_size)
+			# pol_eval_plt
+			# pol_evals_seq['vae_loss_seq'].append(pol_evals['vae_loss_seq'].mean())
+			# pol_evals_seq['critic_loss_seq'].append(pol_evals['critic_loss_seq'].mean())
+			# pol_evals_seq['actor_loss_seq'].append(pol_evals['actor_loss_seq'].mean())
+
+			pol_evals_policy_seq['vae_policy_seq'] = pol_evals['vae_policy_seq']
+			pol_evals_policy_seq['policy_seq'] = pol_evals['policy_seq']
+			pol_evals_policy_seq['origin_policy_seq'] = pol_evals['origin_policy_seq']
+			pol_evals_policy_seq['state_seq'] = pol_evals['state_seq']
+
+			utils.policy_visualization(pol_evals_policy_seq, 'eval_policy', fig_path, training_iters)
+			print(f"eval policy plt over----------{training_iters}")
+
 		# np.save(f"./results/BCQ_{setting}", evaluations)
 
 		training_iters += args.eval_freq
@@ -164,8 +177,9 @@ def train_BCQ(state_dim, action_dim, max_action, device, args):
 	# plt 绘图
 	utils.loss_visualization(pol_trains_seq, 'train', fig_path, training_iters)
 	print(f"train loss plt over----------{training_iters}")
-	utils.loss_visualization(pol_evals_seq, 'eval', fig_path, training_iters)
-	print(f"eval loss plt over----------{training_iters}")
+	# utils.loss_visualization(pol_evals_seq, 'eval', fig_path, training_iters)
+	# print(f"eval loss plt over----------{training_iters}")
+
 
 # Runs policy for X episodes and returns average reward
 # A fixed seed is used for the eval environment
@@ -209,11 +223,14 @@ if __name__ == "__main__":
 	parser.add_argument("--train_behavioral", action="store_true")  # If true, train behavioral (DDPG)
 	parser.add_argument("--generate_buffer", action="store_true")   # If true, generate buffer
 
-	parser.add_argument("--lr", default=1e-3, type=float)           # lr for BCQ Network optimizer
+	parser.add_argument("--lr", default=5e-4, type=float)           # lr for BCQ Network optimizer
 	parser.add_argument("--rand_seed", default=0, type=int)
+	parser.add_argument("--eval_step", default=5e3, type=int)
 	args = parser.parse_args()
 
-	print("---------------------------------------")	
+	# import pdb
+	# pdb.set_trace()
+	print("---------------------------------------")
 	if args.train_behavioral:
 		print(f"Setting: Training behavioral, Env: {args.env}, Seed: {args.seed}")
 	elif args.generate_buffer:
@@ -241,6 +258,9 @@ if __name__ == "__main__":
 	if not os.path.exists(fig_path)	:
 		os.makedirs(fig_path)
 
+	model_path = f"./results/{args.env}/model/{datetime.now():%Y-%m-%d_%H-%M-%S}_{args.lr}_{args.rand_seed}"
+	if not os.path.exists(model_path):
+		os.makedirs(model_path)
 
 	# env = gym.make(args.env)
 	#
@@ -253,7 +273,7 @@ if __name__ == "__main__":
 	# action_dim = env.action_space.shape[0]
 	# max_action = float(env.action_space.high[0])
 
-	state_dim = 8
+	state_dim = 9
 	action_dim = 1
 	max_action = 2
 

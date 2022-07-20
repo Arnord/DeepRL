@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="a1d00ddc-b730-42ec-a2fe-4c90cc98895b" name="dgx">
+        <fileTransfer accessType="SFTP" host="dgx.server.ustb-ai3d.cn" port="12322" sshConfigId="2cbbcadd-594e-478c-aea8-8057fb517f1e" sshConfig="root@dgx.server.ustb-ai3d.cn:12322 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

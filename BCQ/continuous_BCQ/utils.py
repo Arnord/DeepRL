@@ -141,28 +141,47 @@ def reward_visualization(reward_seq, fig_path, training_iters):
 	plt.close()  # 关闭图像，避免出现warning
 
 
-def policy_visualization(pol_policy, fig_path, training_iters):
+def policy_visualization(pol_policy, text, fig_path, training_iters):
 	from matplotlib import pyplot as plt
 	import os
 
 	fig_path = fig_path
-	plt_label = 'policy'
-	policy_seq = pol_policy['policy_seq']
-	vae_policy_seq = pol_policy['vae_policy_seq']
-	origin_seq = pol_policy['origin_seq']
-	x_data_step = [x for x in range(len(policy_seq))]
+	plt_label = text
+	policy_seq = pol_policy['policy_seq'][0:100]
+	vae_policy_seq = pol_policy['vae_policy_seq'][0:100]
+	origin_policy_seq = pol_policy['origin_policy_seq'][0:100]
+	state_seq = pol_policy['state_seq'][0:100]
+	x_limit_show = 100
 
+	out_c_seq = []
+	out_c_setting_seq = []
+	for t in range(len(state_seq)):
+		out_c_seq.append(state_seq[t][1])
+		out_c_setting_seq.append(state_seq[t][-1])
+
+	x_data_step = [x for x in range(len(policy_seq))]
 	# best_epoch = y_dataset_eval_rrse.index(min(y_dataset_eval_rrse))
 
 	plt.figure()
-	plt.plot(x_data_step, policy_seq, color='red', label="vae_policy")
-	plt.plot(x_data_step, policy_seq, color='black', label="policy")
-	plt.plot(x_data_step, policy_seq, color='blue', label="origin_policy")
+	plt.subplot(211)
+	plt.plot(x_data_step, out_c_seq, color='red', label="out_c")
+	plt.plot(x_data_step, out_c_setting_seq, color='black', label="out_c_setting")
+	# plt.xlim(x_limit_show)
+	plt.xlabel('train_Step')
+	plt.title(f'{plt_label}_{training_iters}')
+	plt.ylabel('state')
+	plt.legend()
+
+	plt.subplot(212)
+	plt.plot(x_data_step, vae_policy_seq, color='red', label="vae_policy")
+	plt.plot(x_data_step, policy_seq, color='blue', label="policy")
+	plt.plot(x_data_step, origin_policy_seq, color='black', label="origin_policy")
 	# plt.axvline(best_epoch, color='r', linestyle='--', label='best epoch')
+	# plt.xlim(x_limit_show)
 	plt.xlabel('train_Step')
 	plt.ylabel('policy')
-	plt.title(f'{plt_label}_{training_iters}')
 	plt.legend()
+
 	plt.savefig(os.path.join(fig_path, f'{plt_label}_{training_iters}.png'))
 	plt.close()  # 关闭图像，避免出现warning
 
