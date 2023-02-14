@@ -9,6 +9,13 @@
           </advancedOptions>
         </fileTransfer>
       </webServer>
+      <webServer id="497a8fdb-b5ee-415a-a3e8-d970ba456c81" name="RL_model">
+        <fileTransfer accessType="SFTP" host="dgx.server.ustb-ai3d.cn" port="13322" sshConfigId="1d513f82-0516-4064-abe7-136c80f64faa" sshConfig="root@dgx.server.ustb-ai3d.cn:13322 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
     </option>
   </component>
 </project>

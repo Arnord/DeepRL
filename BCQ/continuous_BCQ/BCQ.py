@@ -226,18 +226,19 @@ class BCQ(object):
 		vae_policy_seq = []
 		origin_policy_seq = []
 		state_seq = []
+		# TODO:需要梯度封闭参照select_action,且需使用select_action函数写
+		with torch.no_grad():
+			for it in range(iterations):
+				# Sample replay buffer / batch
+				state, action, _, _, _ = replay_buffer.sample(batch_size)
+				state_seq.append(state.cpu().detach().numpy()[0])
+				origin_policy_seq.append(action.cpu().detach().numpy()[0][0])
 
-		for it in range(iterations):
-			# Sample replay buffer / batch
-			state, action, next_state, reward, not_done = replay_buffer.sample(batch_size)
-			state_seq.append(state.cpu().detach().numpy()[0])
-			origin_policy_seq.append(action.cpu().detach().numpy()[0][0])
-
-			# Pertubation Model / Action Training
-			sampled_actions = self.vae.decode(state)
-			perturbed_actions = self.actor(state, sampled_actions)
-			vae_policy_seq.append(sampled_actions.cpu().detach().numpy()[0][0])
-			policy_seq.append(perturbed_actions.cpu().detach().numpy()[0][0])
+				# Pertubation Model / Action Training
+				sampled_actions = self.vae.decode(state)
+				perturbed_actions = self.actor(state, sampled_actions)
+				vae_policy_seq.append(sampled_actions.cpu().detach().numpy()[0][0])
+				policy_seq.append(perturbed_actions.cpu().detach().numpy()[0][0])
 
 		outputs = {
 			'policy_seq': policy_seq,

@@ -94,7 +94,7 @@ def train_BCQ(state_dim, action_dim, max_action, device, args):
 	# For saving files
 	# setting = f"{args.env}_{args.seed}"
 	# buffer_name = f"{args.buffer_name}_{setting}"
-	buffer_name = f"replay_buffer"
+	buffer_name = f"thickener_rake_1min_10_1"
 	# Initialize policy
 	policy = BCQ.BCQ(state_dim, action_dim, max_action, device, args.discount, args.tau, args.lmbda, args.phi)
 
@@ -133,7 +133,6 @@ def train_BCQ(state_dim, action_dim, max_action, device, args):
 		'state_seq': []
 	}
 
-
 	while training_iters <= args.max_timesteps:
 		pol_trains = policy.train(replay_buffer_train, iterations=int(args.eval_freq), batch_size=args.batch_size)
 
@@ -150,8 +149,8 @@ def train_BCQ(state_dim, action_dim, max_action, device, args):
 		pol_trains_policy_seq['state_seq'] = pol_trains['state_seq']
 
 		# 单轮次plt 绘图
-		utils.policy_visualization(pol_trains_policy_seq, 'train_policy', fig_path, training_iters)
-		print(f"train policy plt over----------{training_iters}")
+		# utils.policy_visualization(pol_trains_policy_seq, 'train_policy', fig_path, training_iters)
+		# print(f"train policy plt over----------{training_iters}")
 
 		# 验证集
 		if training_iters % args.eval_step == 0:
@@ -175,6 +174,9 @@ def train_BCQ(state_dim, action_dim, max_action, device, args):
 		print(f"Training iterations: {training_iters}")
 
 	# plt 绘图
+	torch.save(policy, os.path.join(model_path, 'best.pth'))
+	torch.save(policy, os.path.join(model_path, 'control.pkl'))
+
 	utils.loss_visualization(pol_trains_seq, 'train', fig_path, training_iters)
 	print(f"train loss plt over----------{training_iters}")
 	# utils.loss_visualization(pol_evals_seq, 'eval', fig_path, training_iters)
@@ -182,7 +184,7 @@ def train_BCQ(state_dim, action_dim, max_action, device, args):
 
 
 # Runs policy for X episodes and returns average reward
-# A fixed seed is used for the eval environment
+# Use offline data to eval
 def eval_policy(policy, env_name, seed, eval_episodes=10):
 	eval_env = gym.make(env_name)
 	eval_env.seed(seed + 100)
@@ -207,7 +209,7 @@ if __name__ == "__main__":
 	
 	parser = argparse.ArgumentParser()
 	# parser.add_argument("--env", default="HalfCheetah-v1")               # OpenAI gym environment name
-	parser.add_argument("--env", default="thickener")
+	parser.add_argument("--env", default="thickener_rake")
 	parser.add_argument("--seed", default=0, type=int)              # Sets Gym, PyTorch and Numpy seeds
 	parser.add_argument("--buffer_name", default="Robust")          # Prepends name to filename
 	parser.add_argument("--eval_freq", default=1e3, type=float)     # How often (time steps) we evaluate
@@ -215,7 +217,7 @@ if __name__ == "__main__":
 	parser.add_argument("--start_timesteps", default=25e3, type=int)# Time steps initial random policy is used before training behavioral
 	parser.add_argument("--rand_action_p", default=0.3, type=float) # Probability of selecting random action during batch generation
 	parser.add_argument("--gaussian_std", default=0.3, type=float)  # Std of Gaussian exploration noise (Set to 0.1 if DDPG trains poorly)
-	parser.add_argument("--batch_size", default=100, type=int)      # Mini batch size for networks
+	parser.add_argument("--batch_size", default=128, type=int)      # Mini batch size for networks
 	parser.add_argument("--discount", default=0.99)                 # Discount factor
 	parser.add_argument("--tau", default=0.005)                     # Target network update rate
 	parser.add_argument("--lmbda", default=0.75)                    # Weighting for clipped double Q-learning in BCQ
@@ -225,7 +227,7 @@ if __name__ == "__main__":
 
 	parser.add_argument("--lr", default=5e-4, type=float)           # lr for BCQ Network optimizer
 	parser.add_argument("--rand_seed", default=0, type=int)
-	parser.add_argument("--eval_step", default=5e3, type=int)
+	parser.add_argument("--eval_step", default=1e4, type=int)
 	args = parser.parse_args()
 
 	# import pdb
@@ -273,9 +275,9 @@ if __name__ == "__main__":
 	# action_dim = env.action_space.shape[0]
 	# max_action = float(env.action_space.high[0])
 
-	state_dim = 9
+	state_dim = 10
 	action_dim = 1
-	max_action = 2
+	max_action = 1.5
 
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
